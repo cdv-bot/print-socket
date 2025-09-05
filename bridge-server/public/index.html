@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bridge Server - Client Examples</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            max-width: 800px;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        .subtitle {
+            font-size: 1.2em;
+            margin-bottom: 40px;
+            opacity: 0.9;
+        }
+        .clients-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin: 40px 0;
+        }
+        .client-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .client-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+        .client-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+        .client-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .client-description {
+            opacity: 0.8;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        .client-button {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .client-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+        }
+        .app2-button {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+        }
+        .app2-button:hover {
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        }
+        .server-info {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 30px 0;
+            border-left: 4px solid #4CAF50;
+        }
+        .server-status {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .status-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 5px;
+            min-width: 150px;
+        }
+        .status-label {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+        .status-value {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        .api-docs {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 30px 0;
+            text-align: left;
+        }
+        .api-endpoint {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        .footer {
+            margin-top: 40px;
+            opacity: 0.7;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌉 Bridge Server</h1>
+        <div class="subtitle">WebSocket Communication Bridge cho Printer Manager</div>
+        
+        <div class="server-info">
+            <h3>📊 Server Status</h3>
+            <div class="server-status">
+                <div class="status-item">
+                    <div class="status-label">HTTP Server</div>
+                    <div class="status-value" id="httpStatus">🔄 Checking...</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">WebSocket (WS)</div>
+                    <div class="status-value">✅ Port 3001</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">WebSocket Secure (WSS)</div>
+                    <div class="status-value">🔒 Port 3002</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="clients-grid">
+            <div class="client-card" onclick="openClient('client-app1.html')">
+                <div class="client-icon">🖨️</div>
+                <div class="client-title">App 1 - Printer Manager</div>
+                <div class="client-description">
+                    Client mô phỏng ứng dụng Printer Manager với các chức năng quản lý máy in, 
+                    gửi lệnh in và xử lý các yêu cầu từ client khác.
+                </div>
+                <a href="client-app1.html" class="client-button">Mở App 1</a>
+            </div>
+
+            <div class="client-card" onclick="openClient('client-app2.html')">
+                <div class="client-icon">📱</div>
+                <div class="client-title">App 2 - Web/Mobile Client</div>
+                <div class="client-description">
+                    Client mô phỏng ứng dụng Web/Mobile với khả năng gửi yêu cầu in, 
+                    nhận danh sách máy in và tương tác với Printer Manager.
+                </div>
+                <a href="client-app2.html" class="client-button app2-button">Mở App 2</a>
+            </div>
+        </div>
+
+        <div class="api-docs">
+            <h3>📚 API Endpoints</h3>
+            <div class="api-endpoint">GET /api/status - Lấy trạng thái server</div>
+            <div class="api-endpoint">GET /api/clients - Danh sách clients đang kết nối</div>
+            <div class="api-endpoint">GET /api/rooms - Danh sách rooms</div>
+            <div class="api-endpoint">POST /api/broadcast - Broadcast message tới tất cả clients</div>
+            <div class="api-endpoint">POST /api/room/:roomId/broadcast - Broadcast message tới room</div>
+        </div>
+
+        <div class="server-info">
+            <h3>🚀 Hướng dẫn sử dụng</h3>
+            <ol style="text-align: left; margin: 20px 0;">
+                <li>Mở cả hai client examples trong các tab/cửa sổ khác nhau</li>
+                <li>Kết nối cả hai clients tới Bridge Server</li>
+                <li>Đăng ký clients với các loại khác nhau (printer, web, mobile)</li>
+                <li>Tham gia cùng một room để test communication</li>
+                <li>Thử các chức năng: broadcast, direct message, print commands</li>
+                <li>Kiểm tra logs để theo dõi message flow</li>
+            </ol>
+        </div>
+
+        <div class="footer">
+            <p>Bridge Server đang chạy trên localhost</p>
+            <p>HTTP: 3000 | WebSocket: 3001 | WebSocket Secure: 3002</p>
+        </div>
+    </div>
+
+    <script>
+        function openClient(clientFile) {
+            window.open(clientFile, '_blank');
+        }
+
+        // Check server status
+        function checkServerStatus() {
+            fetch('/api/status')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('httpStatus').innerHTML = '✅ Online';
+                    document.getElementById('httpStatus').style.color = '#4CAF50';
+                })
+                .catch(error => {
+                    document.getElementById('httpStatus').innerHTML = '❌ Offline';
+                    document.getElementById('httpStatus').style.color = '#f44336';
+                });
+        }
+
+        // Check status on page load
+        checkServerStatus();
+        
+        // Check status every 30 seconds
+        setInterval(checkServerStatus, 30000);
+
+        // Add some interactive effects
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.client-card');
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-5px) scale(1.02)';
+                });
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0) scale(1)';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

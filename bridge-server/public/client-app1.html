@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bridge Client - App 1</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #fff;
+        }
+        .section {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 10px;
+            border-left: 4px solid #4CAF50;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+            flex-wrap: wrap;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+        input, select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 5px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .status.connected {
+            background: rgba(76, 175, 80, 0.3);
+            color: #4CAF50;
+        }
+        .status.disconnected {
+            background: rgba(244, 67, 54, 0.3);
+            color: #f44336;
+        }
+        .status.connecting {
+            background: rgba(255, 193, 7, 0.3);
+            color: #FF9800;
+        }
+        .log {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 5px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+        .log-entry {
+            margin: 2px 0;
+            padding: 2px 0;
+        }
+        .log-entry.info { color: #87CEEB; }
+        .log-entry.success { color: #90EE90; }
+        .log-entry.error { color: #FFB6C1; }
+        .log-entry.warning { color: #F0E68C; }
+        .client-info {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌉 Bridge Client - App 1 (Printer Manager)</h1>
+        
+        <!-- Connection Section -->
+        <div class="section">
+            <h3>🔗 Kết nối</h3>
+            <div class="controls">
+                <select id="serverType">
+                    <option value="ws://localhost:3001">WS (localhost:3001)</option>
+                    <option value="wss://localhost:3002">WSS (localhost:3002)</option>
+                </select>
+                <button id="connectBtn" onclick="connect()">Kết nối</button>
+                <button id="disconnectBtn" onclick="disconnect()" disabled>Ngắt kết nối</button>
+            </div>
+            <div id="connectionStatus" class="status disconnected">Chưa kết nối</div>
+            <div id="clientInfo" class="client-info" style="display: none;"></div>
+        </div>
+
+        <!-- Registration Section -->
+        <div class="section">
+            <h3>📝 Đăng ký Client</h3>
+            <div class="controls">
+                <select id="clientType">
+                    <option value="printer">Printer Manager</option>
+                    <option value="web">Web Client</option>
+                    <option value="mobile">Mobile App</option>
+                </select>
+                <input type="text" id="clientName" placeholder="Tên client" value="Printer-001">
+                <button onclick="registerClient()" disabled id="registerBtn">Đăng ký</button>
+            </div>
+        </div>
+
+        <!-- Room Management -->
+        <div class="section">
+            <h3>🏠 Quản lý Room</h3>
+            <div class="controls">
+                <input type="text" id="roomId" placeholder="Room ID" value="printer-room">
+                <button onclick="joinRoom()" disabled id="joinRoomBtn">Tham gia Room</button>
+                <button onclick="leaveRoom()" disabled id="leaveRoomBtn">Rời Room</button>
+            </div>
+        </div>
+
+        <!-- Messaging Section -->
+        <div class="section">
+            <h3>💬 Gửi tin nhắn</h3>
+            <div class="controls">
+                <input type="text" id="messageText" placeholder="Nội dung tin nhắn" value="Hello from App 1!">
+                <button onclick="broadcastMessage()" disabled id="broadcastBtn">Broadcast All</button>
+                <button onclick="roomBroadcast()" disabled id="roomBroadcastBtn">Broadcast Room</button>
+            </div>
+            <div class="controls">
+                <input type="text" id="targetClientId" placeholder="Target Client ID">
+                <button onclick="sendDirectMessage()" disabled id="directMsgBtn">Gửi Direct</button>
+            </div>
+        </div>
+
+        <!-- Print Commands Section -->
+        <div class="section">
+            <h3>🖨️ Lệnh In</h3>
+            <div class="controls">
+                <select id="printCommand">
+                    <option value="get_printers">Lấy danh sách máy in</option>
+                    <option value="print_test">In thử nghiệm</option>
+                    <option value="print_document">In tài liệu</option>
+                </select>
+                <button onclick="sendPrintCommand()" disabled id="printBtn">Gửi lệnh in</button>
+            </div>
+        </div>
+
+        <!-- Log Section -->
+        <div class="section">
+            <h3>📋 Log</h3>
+            <div class="controls">
+                <button onclick="clearLog()">Xóa Log</button>
+                <button onclick="pingServer()" disabled id="pingBtn">Ping Server</button>
+            </div>
+            <div id="log" class="log"></div>
+        </div>
+    </div>
+
+    <script>
+        let ws = null;
+        let clientId = null;
+        let currentRoom = null;
+        let isRegistered = false;
+
+        function log(message, type = 'info') {
+            const logElement = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${timestamp}] ${message}`;
+            logElement.appendChild(entry);
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        function updateStatus(status, message) {
+            const statusElement = document.getElementById('connectionStatus');
+            statusElement.className = `status ${status}`;
+            statusElement.textContent = message;
+        }
+
+        function updateButtons() {
+            const connected = ws && ws.readyState === WebSocket.OPEN;
+            
+            document.getElementById('connectBtn').disabled = connected;
+            document.getElementById('disconnectBtn').disabled = !connected;
+            document.getElementById('registerBtn').disabled = !connected || isRegistered;
+            document.getElementById('joinRoomBtn').disabled = !connected || !isRegistered;
+            document.getElementById('leaveRoomBtn').disabled = !connected || !currentRoom;
+            document.getElementById('broadcastBtn').disabled = !connected || !isRegistered;
+            document.getElementById('roomBroadcastBtn').disabled = !connected || !currentRoom;
+            document.getElementById('directMsgBtn').disabled = !connected || !isRegistered;
+            document.getElementById('printBtn').disabled = !connected || !isRegistered;
+            document.getElementById('pingBtn').disabled = !connected;
+        }
+
+        function updateClientInfo() {
+            const infoElement = document.getElementById('clientInfo');
+            if (clientId) {
+                infoElement.style.display = 'block';
+                infoElement.innerHTML = `
+                    <strong>Client ID:</strong> ${clientId}<br>
+                    <strong>Registered:</strong> ${isRegistered ? 'Yes' : 'No'}<br>
+                    <strong>Current Room:</strong> ${currentRoom || 'None'}
+                `;
+            } else {
+                infoElement.style.display = 'none';
+            }
+        }
+
+        function connect() {
+            const serverUrl = document.getElementById('serverType').value;
+            updateStatus('connecting', 'Đang kết nối...');
+            log(`Connecting to ${serverUrl}...`);
+
+            ws = new WebSocket(serverUrl);
+
+            ws.onopen = function() {
+                updateStatus('connected', 'Đã kết nối');
+                log('Connected to Bridge Server', 'success');
+                updateButtons();
+            };
+
+            ws.onmessage = function(event) {
+                try {
+                    const data = JSON.parse(event.data);
+                    handleMessage(data);
+                } catch (error) {
+                    log(`Error parsing message: ${error.message}`, 'error');
+                }
+            };
+
+            ws.onclose = function() {
+                updateStatus('disconnected', 'Đã ngắt kết nối');
+                log('Disconnected from server', 'warning');
+                clientId = null;
+                currentRoom = null;
+                isRegistered = false;
+                updateButtons();
+                updateClientInfo();
+            };
+
+            ws.onerror = function(error) {
+                log(`WebSocket error: ${error}`, 'error');
+                updateStatus('disconnected', 'Lỗi kết nối');
+            };
+        }
+
+        function disconnect() {
+            if (ws) {
+                ws.close();
+            }
+        }
+
+        function handleMessage(data) {
+            log(`Received: ${JSON.stringify(data)}`, 'info');
+
+            switch (data.type) {
+                case 'welcome':
+                    clientId = data.clientId;
+                    log(`Welcome! Client ID: ${clientId}`, 'success');
+                    updateClientInfo();
+                    break;
+
+                case 'registered':
+                    isRegistered = true;
+                    log(`Registered as ${data.clientType}`, 'success');
+                    updateButtons();
+                    updateClientInfo();
+                    break;
+
+                case 'room_joined':
+                    currentRoom = data.roomId;
+                    log(`Joined room: ${data.roomId}`, 'success');
+                    updateButtons();
+                    updateClientInfo();
+                    break;
+
+                case 'room_left':
+                    currentRoom = null;
+                    log(`Left room: ${data.roomId}`, 'info');
+                    updateButtons();
+                    updateClientInfo();
+                    break;
+
+                case 'broadcast_message':
+                    log(`Broadcast from ${data.fromType} (${data.from}): ${JSON.stringify(data.data)}`, 'success');
+                    break;
+
+                case 'room_message':
+                    log(`Room message from ${data.fromType} (${data.from}): ${JSON.stringify(data.data)}`, 'success');
+                    break;
+
+                case 'direct_message':
+                    log(`Direct message from ${data.fromType} (${data.from}): ${JSON.stringify(data.data)}`, 'success');
+                    break;
+
+                case 'client_registered':
+                    log(`New client registered: ${data.clientType} (${data.clientId})`, 'info');
+                    break;
+
+                case 'client_joined_room':
+                    log(`Client ${data.clientType} (${data.clientId}) joined room ${data.roomId}`, 'info');
+                    break;
+
+                case 'client_left_room':
+                    log(`Client ${data.clientId} left room ${data.roomId}`, 'info');
+                    break;
+
+                case 'client_disconnected':
+                    log(`Client ${data.clientId} disconnected`, 'warning');
+                    break;
+
+                case 'pong':
+                    log('Pong received', 'info');
+                    break;
+
+                case 'error':
+                    log(`Error: ${data.message}`, 'error');
+                    break;
+
+                default:
+                    log(`Unknown message type: ${data.type}`, 'warning');
+            }
+        }
+
+        function registerClient() {
+            const clientType = document.getElementById('clientType').value;
+            const clientName = document.getElementById('clientName').value;
+            
+            const message = {
+                type: 'register',
+                clientType: clientType,
+                metadata: {
+                    name: clientName,
+                    version: '1.0.0',
+                    capabilities: ['print', 'scan', 'status']
+                }
+            };
+            
+            ws.send(JSON.stringify(message));
+            log(`Registering as ${clientType}...`);
+        }
+
+        function joinRoom() {
+            const roomId = document.getElementById('roomId').value;
+            if (!roomId) {
+                log('Please enter room ID', 'error');
+                return;
+            }
+            
+            const message = {
+                type: 'join_room',
+                roomId: roomId
+            };
+            
+            ws.send(JSON.stringify(message));
+            log(`Joining room: ${roomId}...`);
+        }
+
+        function leaveRoom() {
+            const message = {
+                type: 'leave_room'
+            };
+            
+            ws.send(JSON.stringify(message));
+            log('Leaving current room...');
+        }
+
+        function broadcastMessage() {
+            const messageText = document.getElementById('messageText').value;
+            if (!messageText) {
+                log('Please enter message text', 'error');
+                return;
+            }
+            
+            const message = {
+                type: 'broadcast',
+                data: {
+                    text: messageText,
+                    timestamp: new Date().toISOString()
+                }
+            };
+            
+            ws.send(JSON.stringify(message));
+            log(`Broadcasting: ${messageText}`);
+        }
+
+        function roomBroadcast() {
+            const messageText = document.getElementById('messageText').value;
+            if (!messageText) {
+                log('Please enter message text', 'error');
+                return;
+            }
+            
+            const message = {
+                type: 'room_broadcast',
+                data: {
+                    text: messageText,
+                    timestamp: new Date().toISOString()
+                }
+            };
+            
+            ws.send(JSON.stringify(message));
+            log(`Room broadcasting: ${messageText}`);
+        }
+
+        function sendDirectMessage() {
+            const targetId = document.getElementById('targetClientId').value;
+            const messageText = document.getElementById('messageText').value;
+            
+            if (!targetId || !messageText) {
+                log('Please enter target client ID and message text', 'error');
+                return;
+            }
+            
+            const message = {
+                type: 'direct_message',
+                targetId: targetId,
+                data: {
+                    text: messageText,
+                    timestamp: new Date().toISOString()
+                }
+            };
+            
+            ws.send(JSON.stringify(message));
+            log(`Sending direct message to ${targetId}: ${messageText}`);
+        }
+
+        function sendPrintCommand() {
+            const command = document.getElementById('printCommand').value;
+            
+            const message = {
+                type: 'broadcast',
+                data: {
+                    command: command,
+                    type: 'print_command',
+                    timestamp: new Date().toISOString(),
+                    params: {
+                        printer: 'default',
+                        copies: 1
+                    }
+                }
+            };
+            
+            ws.send(JSON.stringify(message));
+            log(`Sending print command: ${command}`);
+        }
+
+        function pingServer() {
+            const message = {
+                type: 'ping'
+            };
+            
+            ws.send(JSON.stringify(message));
+            log('Pinging server...');
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+
+        // Initialize
+        updateButtons();
+        log('Bridge Client App 1 initialized', 'info');
+    </script>
+</body>
+</html>
