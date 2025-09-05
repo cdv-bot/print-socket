@@ -1,0 +1,63 @@
+{
+  "name": "electron-printer-manager-basic",
+  "version": "1.0.0",
+  "description": "Ứng dụng Electron cơ bản: quản lý máy in (liệt kê, đặt mặc định, in trang thử).",
+  "main": "main.js",
+  "author": "Your Name",
+  "homepage": ".",
+  "scripts": {
+    "start": "electron-forge start",
+    "build": "electron-builder",
+    "build:win": "electron-builder --win",
+    "build:portable": "electron-builder --win portable",
+    "dist": "npm run build",
+    "package": "electron-forge package",
+    "make": "electron-forge make"
+  },
+  "build": {
+    "appId": "com.electron.printer-manager",
+    "productName": "Electron Printer Manager",
+    "directories": {
+      "output": "build"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer/**/*",
+      "*.html",
+      "node_modules/**/*"
+    ],
+    "win": {
+      "target": {
+        "target": "portable",
+        "arch": [
+          "x64"
+        ]
+      },
+      "forceCodeSigning": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  },
+  "devDependencies": {
+    "@electron-forge/cli": "^7.8.3",
+    "@electron-forge/maker-deb": "^7.8.3",
+    "@electron-forge/maker-rpm": "^7.8.3",
+    "@electron-forge/maker-squirrel": "^7.8.3",
+    "@electron-forge/maker-zip": "^7.8.3",
+    "@electron-forge/plugin-auto-unpack-natives": "^7.8.3",
+    "@electron-forge/plugin-fuses": "^7.8.3",
+    "@electron/fuses": "^1.8.0",
+    "electron": "^30.0.0",
+    "electron-packager": "^17.1.2"
+  },
+  "dependencies": {
+    "electron-squirrel-startup": "^1.0.1",
+    "selfsigned": "^3.0.1",
+    "ws": "^8.18.3"
+  }
+}

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Bridge Test</title>
+</head>
+<body>
+    <h1>Simple Bridge Test</h1>
+    <button onclick="sendMessage()">Send List Printers</button>
+    <div id="log"></div>
+
+    <script>
+        const ws = new WebSocket('ws://localhost:3001');
+        const log = document.getElementById('log');
+        
+        function addLog(message) {
+            log.innerHTML += '<p>' + new Date().toLocaleTimeString() + ': ' + message + '</p>';
+        }
+        
+        ws.onopen = function() {
+            addLog('Connected to Bridge Server');
+            
+            // Register as Web Client
+            const registerMsg = {
+                type: 'register',
+                clientType: 'Web Client',
+                clientId: 'simple-test-' + Date.now()
+            };
+            ws.send(JSON.stringify(registerMsg));
+            addLog('Sent register message');
+        };
+        
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            addLog('Received: ' + JSON.stringify(data));
+        };
+        
+        ws.onerror = function(error) {
+            addLog('Error: ' + error);
+        };
+        
+        ws.onclose = function() {
+            addLog('Connection closed');
+        };
+        
+        function sendMessage() {
+            const message = {
+                type: 'direct_message',
+                targetId: 'Printer Manager',
+                data: {
+                    type: 'listPrinters',
+                    id: Math.floor(Math.random() * 1000)
+                }
+            };
+            ws.send(JSON.stringify(message));
+            addLog('Sent listPrinters message: ' + JSON.stringify(message));
+        }
+    </script>
+</body>
+</html>

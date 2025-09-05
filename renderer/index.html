@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline';">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Quản lý máy in (Electron cơ bản)</title>
+    <style>
+      :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+      body { margin: 0; background: #f7f7f8; color: #111; }
+      header { padding: 16px 20px; background: #fff; border-bottom: 1px solid #e5e5e5; position: sticky; top: 0; }
+      h1 { font-size: 20px; margin: 0; }
+      main { padding: 20px; }
+      .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+      .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+      select, button { padding: 10px 12px; border-radius: 8px; border: 1px solid #ddd; font-size: 14px; }
+      button { cursor: pointer; }
+      button.primary { border-color: #0a66ff; }
+      table { width: 100%; border-collapse: collapse; }
+      th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #eee; font-size: 14px; }
+      .muted { color: #666; }
+      .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; border: 1px solid #ddd; font-size: 12px; }
+      .ok { border-color: #6fbf73; }
+      .warn { border-color: #f2b01e; }
+      .err { border-color: #e35d6a; }
+      footer { padding: 12px 20px; color: #666; font-size: 12px; }
+    </style>
+  </head>
+  <body>
+    <header><h1>Quản lý máy in trong mạng — bản cơ bản</h1></header>
+    <main>
+      <div class="card">
+        <div class="row">
+          <button id="refresh">🔄 Làm mới</button>
+          <span id="summary" class="muted"></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="row" style="margin-bottom: 8px;">
+          <label for="printerSel"><strong>Máy in:</strong></label>
+          <select id="printerSel"></select>
+          <button id="setDefault" class="primary">⭐ Đặt mặc định</button>
+          <button id="printTest">🖨️ In trang thử</button>
+        </div>
+        <table id="printerTable">
+          <thead><tr><th>Tên</th><th>Nguồn</th><th>Thiết bị/Cổng</th><th>Trạng thái</th><th>Mặc định</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <div id="msg" class="muted" style="margin-top:8px;"></div>
+      </div>
+
+      <div class="card">
+        <details>
+          <summary>⚙️ Gợi ý cấu hình & quyền</summary>
+          <ul>
+            <li>Windows: cần PowerShell & quyền đặt máy in mặc định.</li>
+            <li>macOS/Linux: yêu cầu CUPS (lpstat, lp, lpoptions).</li>
+            <li>Tên máy in có dấu cách vẫn được hỗ trợ.</li>
+          </ul>
+        </details>
+      </div>
+    </main>
+    <footer>© Demo Electron — dùng cho mục đích học tập & thử nghiệm.</footer>
+    <script src="./renderer.js"></script>
+  </body>
+</html>

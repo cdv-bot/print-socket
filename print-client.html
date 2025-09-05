@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Print Client - WebSocket Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        h1 {
+            text-align: center;
+            color: #4a5568;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            text-align: center;
+        }
+        .status.connected {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 2px solid #38a169;
+        }
+        .status.disconnected {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 2px solid #e53e3e;
+        }
+        .status.connecting {
+            background: #fef5e7;
+            color: #744210;
+            border: 2px solid #d69e2e;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+        .button-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        button {
+            padding: 15px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .btn-secondary {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.4);
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(17, 153, 142, 0.4);
+        }
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        .log {
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin-top: 20px;
+        }
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 5px;
+            border-radius: 4px;
+        }
+        .log-entry.info {
+            background: #ebf8ff;
+            color: #2b6cb0;
+        }
+        .log-entry.success {
+            background: #f0fff4;
+            color: #22543d;
+        }
+        .log-entry.error {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+        .printer-list {
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+        .printer-item {
+            padding: 10px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .printer-item:last-child {
+            border-bottom: none;
+        }
+        .printer-name {
+            font-weight: 600;
+            color: #4a5568;
+        }
+        .printer-status {
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+        .printer-default {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+        
+        .connection-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        
+        .connection-controls label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: normal;
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🖨️ Print Client</h1>
+        
+        <div id="status" class="status disconnected">
+            Chưa kết nối đến WebSocket Server
+        </div>
+        
+        <div class="form-group">
+            <label for="serverUrl">WebSocket Server URL:</label>
+            <input type="text" id="serverUrl" value="ws://localhost:3001" placeholder="ws://localhost:3001">
+        </div>
+        
+        <div class="connection-controls">
+            <label>
+                <input type="checkbox" id="secureMode" onchange="toggleSecureMode()"> 
+                Use WSS (Secure)
+            </label>
+        </div>
+        
+        <div class="button-group">
+            <button id="connectBtn" class="btn-primary" onclick="connect()">Kết nối</button>
+            <button id="disconnectBtn" class="btn-secondary" onclick="disconnect()" disabled>Ngắt kết nối</button>
+            <button id="listPrintersBtn" class="btn-success" onclick="listPrinters()" disabled>Liệt kê máy in</button>
+        </div>
+        
+        <div class="form-group">
+            <label for="printerSelect">Chọn máy in:</label>
+            <select id="printerSelect">
+                <option value="">-- Chọn máy in --</option>
+            </select>
+        </div>
+        
+        <div id="printerList" class="printer-list" style="display: none;">
+            <h3>Danh sách máy in:</h3>
+        </div>
+        
+        <div class="form-group">
+            <label for="printContent">Nội dung cần in:</label>
+            <textarea id="printContent" placeholder="Nhập nội dung cần in...">Đây là nội dung test in từ web client.
+
+Người dùng: Admin
+Thời gian: ${new Date().toLocaleString('vi-VN')}
+
+Nội dung này được gửi qua WebSocket từ trình duyệt đến ứng dụng Electron để in mà không hiển thị popup.
+
+Chúc bạn thành công!</textarea>
+        </div>
+        
+        <div class="button-group">
+            <button id="printTestBtn" class="btn-success" onclick="printTest()" disabled>In trang thử</button>
+            <button id="printContentBtn" class="btn-primary" onclick="printContent()" disabled>In nội dung</button>
+        </div>
+        
+        <div class="log" id="log">
+            <div class="log-entry info">Sẵn sàng kết nối...</div>
+        </div>
+    </div>
+
+    <script>
+        let ws = null;
+        let messageId = 1;
+        let useSecure = false;
+        
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.innerHTML = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        function updateStatus(status, message) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = `status ${status}`;
+            statusDiv.textContent = message;
+        }
+        
+        function updateButtons(connected) {
+            document.getElementById('connectBtn').disabled = connected;
+            document.getElementById('disconnectBtn').disabled = !connected;
+            document.getElementById('listPrintersBtn').disabled = !connected;
+            document.getElementById('printTestBtn').disabled = !connected;
+            document.getElementById('printContentBtn').disabled = !connected;
+        }
+        
+        function toggleSecureMode() {
+            useSecure = document.getElementById('secureMode').checked;
+            const serverUrl = document.getElementById('serverUrl');
+            if (useSecure) {
+                serverUrl.value = 'wss://localhost:3002';
+                serverUrl.placeholder = 'wss://localhost:3002';
+            } else {
+                serverUrl.value = 'ws://localhost:3001';
+                serverUrl.placeholder = 'ws://localhost:3001';
+            }
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                log('Vui lòng ngắt kết nối và kết nối lại để thay đổi loại kết nối', 'info');
+            }
+        }
+        
+        function connect() {
+            const url = document.getElementById('serverUrl').value;
+            if (!url) {
+                log('Vui lòng nhập URL WebSocket Server', 'error');
+                return;
+            }
+            
+            updateStatus('connecting', 'Đang kết nối...');
+            log(`Đang kết nối đến ${url}... (${useSecure ? 'WSS' : 'WS'})`);
+            
+            ws = new WebSocket(url);
+            
+            ws.onopen = function() {
+                updateStatus('connected', `Đã kết nối thành công! (${useSecure ? 'WSS' : 'WS'})`);
+                updateButtons(true);
+                log(`Kết nối ${useSecure ? 'WSS' : 'WS'} thành công!`, 'success');
+                
+                // Register as Web Client
+                const registerMessage = {
+                    type: 'register',
+                    clientType: 'Web Client',
+                    clientId: 'web-client-' + Date.now()
+                };
+                ws.send(JSON.stringify(registerMessage));
+                log('Đã đăng ký với Bridge Server', 'info');
+            };
+            
+            ws.onmessage = function(event) {
+                try {
+                    const message = JSON.parse(event.data);
+                    log(`Nhận được: ${JSON.stringify(message, null, 2)}`, 'info');
+                    
+                    // Handle bridge server messages
+                     if (message.type === 'direct_message' && message.data) {
+                         const data = message.data;
+                         
+                         if (data.type === 'printerList') {
+                             updatePrinterList(data.printers);
+                         } else if (data.type === 'printResult') {
+                             if (data.success) {
+                                 log(`In thành công: ${data.message}`, 'success');
+                             } else {
+                                 log(`Lỗi in: ${data.error}`, 'error');
+                             }
+                         }
+                     } else if (message.type === 'direct_message_sent') {
+                         log('Tin nhắn đã được gửi thành công', 'success');
+                     } else if (message.type === 'registered') {
+                        log('Đã đăng ký thành công với Bridge Server', 'success');
+                    } else if (message.type === 'error') {
+                        log(`Lỗi từ Bridge Server: ${message.message}`, 'error');
+                    } else if (message.type === 'welcome') {
+                        log(`Server: ${message.message}`, 'success');
+                    } else if (message.success !== undefined) {
+                        if (message.success) {
+                            log(`Thành công: ${JSON.stringify(message.data)}`, 'success');
+                            
+                            // Handle printer list response
+                            if (message.data && Array.isArray(message.data)) {
+                                updatePrinterList(message.data);
+                            }
+                        } else {
+                            log(`Lỗi: ${message.error}`, 'error');
+                        }
+                    }
+                } catch (error) {
+                    log(`Lỗi parse JSON: ${error.message}`, 'error');
+                }
+            };
+            
+            ws.onclose = function() {
+                updateStatus('disconnected', 'Đã ngắt kết nối');
+                updateButtons(false);
+                log('Kết nối WebSocket đã đóng', 'info');
+            };
+            
+            ws.onerror = function(error) {
+                console.error('WebSocket Error Details:', error);
+                let errorMsg = 'Lỗi kết nối WebSocket';
+                
+                if (useSecure) {
+                    errorMsg += ' (WSS). Có thể do:';
+                    log(errorMsg, 'error');
+                    log('1. Certificate chưa được accept - Hãy truy cập https://localhost:8443 trước', 'error');
+                    log('2. WSS server chưa khởi động - Kiểm tra terminal', 'error');
+                    log('3. Port 8443 bị chặn - Kiểm tra firewall', 'error');
+                    log('💡 Thử: Mở tab mới → https://localhost:8443 → Accept certificate → Quay lại đây', 'info');
+                } else {
+                    errorMsg += ' (WS)';
+                    log(errorMsg, 'error');
+                    log('Kiểm tra WS server có đang chạy trên port 8080 không', 'error');
+                }
+                
+                updateStatus('disconnected', 'Lỗi kết nối');
+                updateButtons(false);
+            };
+        }
+        
+        function disconnect() {
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+        }
+        
+        function sendMessage(command, data = {}) {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                log('WebSocket chưa kết nối!', 'error');
+                return;
+            }
+            
+            const message = {
+                id: messageId++,
+                command: command,
+                ...data
+            };
+            
+            log(`Gửi: ${JSON.stringify(message)}`);
+            ws.send(JSON.stringify(message));
+        }
+        
+        function listPrinters() {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                log('Chưa kết nối đến server', 'error');
+                return;
+            }
+            
+            const message = {
+                type: 'direct_message',
+                targetId: 'Printer Manager',
+                data: {
+                    type: 'listPrinters',
+                    id: messageId++
+                }
+            };
+            
+            ws.send(JSON.stringify(message));
+            log('Đã gửi yêu cầu liệt kê máy in qua Bridge Server', 'info');
+        }
+        
+        function updatePrinterList(printers) {
+            const select = document.getElementById('printerSelect');
+            const listDiv = document.getElementById('printerList');
+            
+            // Update select options
+            select.innerHTML = '<option value="">-- Chọn máy in --</option>';
+            printers.forEach(printer => {
+                const option = document.createElement('option');
+                option.value = printer.name;
+                option.textContent = `${printer.name} ${printer.isDefault ? '(Mặc định)' : ''}`;
+                select.appendChild(option);
+            });
+            
+            // Update printer list display
+            listDiv.innerHTML = '<h3>Danh sách máy in:</h3>';
+            printers.forEach(printer => {
+                const item = document.createElement('div');
+                item.className = 'printer-item';
+                item.innerHTML = `
+                    <div>
+                        <div class="printer-name">${printer.name}</div>
+                        <div style="font-size: 12px; color: #666;">${printer.driver || printer.device || ''}</div>
+                    </div>
+                    <div class="printer-status ${printer.isDefault ? 'printer-default' : ''}">
+                        ${printer.isDefault ? 'Mặc định' : printer.status || 'Sẵn sàng'}
+                    </div>
+                `;
+                listDiv.appendChild(item);
+            });
+            
+            listDiv.style.display = 'block';
+        }
+        
+        function printTest() {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                log('Chưa kết nối đến server', 'error');
+                return;
+            }
+            
+            const printerName = document.getElementById('printerSelect').value;
+            if (!printerName) {
+                log('Vui lòng chọn máy in!', 'error');
+                return;
+            }
+            
+            const message = {
+                type: 'direct_message',
+                targetId: 'Printer Manager',
+                data: {
+                    type: 'printTest',
+                    printer: printerName,
+                    id: messageId++
+                }
+            };
+            
+            ws.send(JSON.stringify(message));
+            log(`Đã gửi lệnh in thử đến máy in: ${printerName} qua Bridge Server`, 'info');
+        }
+        
+        function printContent() {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                log('Chưa kết nối đến server', 'error');
+                return;
+            }
+            
+            const printerName = document.getElementById('printerSelect').value;
+            const content = document.getElementById('printContent').value;
+            
+            if (!printerName) {
+                log('Vui lòng chọn máy in!', 'error');
+                return;
+            }
+            
+            if (!content.trim()) {
+                log('Vui lòng nhập nội dung cần in!', 'error');
+                return;
+            }
+            
+            // Replace template variables
+            const finalContent = content.replace('${new Date().toLocaleString(\'vi-VN\')}', new Date().toLocaleString('vi-VN'));
+            
+            const message = {
+                type: 'direct_message',
+                targetId: 'Printer Manager',
+                data: {
+                    type: 'printContent',
+                    printer: printerName,
+                    content: finalContent,
+                    options: { addHeader: true },
+                    id: messageId++
+                }
+            };
+            
+            ws.send(JSON.stringify(message));
+            log(`Đã gửi lệnh in nội dung đến máy in: ${printerName} qua Bridge Server`, 'info');
+        }
+        
+        // Auto-connect on page load
+        window.onload = function() {
+            log('Trang đã tải xong. Sẵn sàng kết nối.', 'info');
+        };
+    </script>
+</body>
+</html>
